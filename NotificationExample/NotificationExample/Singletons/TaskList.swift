@@ -35,11 +35,6 @@ class TaskList {
         content.body = dateFormatter.string(from: item.deadline)
         content.sound = UNNotificationSound.default()
         //content.badge = (UIApplication.shared.applicationIconBadgeNumber + 1) as NSNumber
-        
-//        UNUserNotificationCenter.current().getPendingNotificationRequests { (requests) in
-//            content.badge = requests.count as NSNumber
-//        }
-        
         content.categoryIdentifier = "\(item.UUID)"
         let trigger = UNCalendarNotificationTrigger(dateMatching: newComponents, repeats: false)
         let request = UNNotificationRequest.init(identifier: item.UUID, content: content, trigger: trigger)

@@ -8,6 +8,8 @@
 
 import UIKit
 import UserNotifications
+import Firebase
+import FirebaseMessaging
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -18,7 +20,59 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         
-        self.registerForRemoteNotification()
+        FIRApp.configure()
+        
+        if #available(iOS 10.0, *) {
+            let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+            UNUserNotificationCenter.current().requestAuthorization(
+                options: authOptions,
+                completionHandler: {_, _ in })
+            
+            // For iOS 10 display notification (sent via APNS)
+            UNUserNotificationCenter.current().delegate = self
+        
+            
+        } else {
+            let settings: UIUserNotificationSettings =
+                UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
+            application.registerUserNotificationSettings(settings)
+        }
+        
+        application.registerForRemoteNotifications()
+        
+//        self.registerForRemoteNotification()
+//        
+//        if #available(iOS 10, *) {
+//            
+//            //Notifications get posted to the function (delegate):  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: () -> Void)"
+//            
+//            
+//            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { (granted, error) in
+//                
+//                guard error == nil else {
+//                    //Display Error.. Handle Error.. etc..
+//                    return
+//                }
+//                
+//                if granted {
+//                    //Do stuff here..
+//                    
+//                    //Register for RemoteNotifications. Your Remote Notifications can display alerts now :)
+//                    application.registerForRemoteNotifications()
+//                }
+//                else {
+//                    //Handle user denying permissions..
+//                }
+//            }
+//            
+//            //Register for remote notifications.. If permission above is NOT granted, all notifications are delivered silently to AppDelegate.
+//            application.registerForRemoteNotifications()
+//        }
+//        else {
+//            let settings = UIUserNotificationSettings(types: [.alert, .badge, .sound], categories: nil)
+//            application.registerUserNotificationSettings(settings)
+//            application.registerForRemoteNotifications()
+//        }
         
 //        // iOS 10 support
 //        if #available(iOS 10, *) {
@@ -43,6 +97,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         return true
     }
 
+
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
@@ -64,29 +119,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
-
-//    // Called when APNs has assigned the device a unique token
-//    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-//        // Convert token to string
+    
+    // Called when APNs has assigned the device a unique token
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        // Convert token to string
+//        let token = FIRInstanceID.instanceID().token()!
+//        print(token)
 //        let deviceTokenString = deviceToken.reduce("", {$0 + String(format: "%02X", $1)})
-//        
-//        // Print it to console
-//        print("APNs device token: \(deviceTokenString)")
-//        
-//        // Persist it in your backend in case it's new
-//    }
-//    
-//    // Called when APNs failed to register the device for push notifications
-//    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-//        // Print the error to console (you should alert the user that registration failed)
-//        print("APNs registration failed: \(error)")
-//    }
-//    
-//    // Push notification received
-//    func application(_ application: UIApplication, didReceiveRemoteNotification data: [AnyHashable : Any]) {
-//        // Print notification payload data
-//        print("Push notification received: \(data)")
-//    }
+        
+        // Print it to console
+        //print("APNs device token: \(deviceTokenString)")
+        FIRInstanceID.instanceID().setAPNSToken(deviceToken, type: FIRInstanceIDAPNSTokenType.sandbox)
+        // Persist it in your backend in case it's new
+    }
+    
+    // Called when APNs failed to register the device for push notifications
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        // Print the error to console (you should alert the user that registration failed)
+        print("APNs registration failed: \(error)")
+    }
+    
+    // Push notification received
+    func application(_ application: UIApplication, didReceiveRemoteNotification data: [AnyHashable : Any]) {
+        // Print notification payload data
+        print("Push notification received: \(data["gcm_message_id"])")
+    }
+    
+    func application(application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
+        FIRInstanceID.instanceID().setAPNSToken(deviceToken as Data, type: FIRInstanceIDAPNSTokenType.sandbox)
+    }
     
     //Called when a notification is delivered to a foreground app.
     @available(iOS 10.0, *)
@@ -130,6 +192,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             UIApplication.shared.registerUserNotificationSettings(UIUserNotificationSettings(types: [.sound, .alert, .badge], categories: nil))
             UIApplication.shared.registerForRemoteNotifications()
         }
+    }
+    
+    func tokenRefreshNotification(_ notification: Notification) {
+        if let refreshedToken = FIRInstanceID.instanceID().token() {
+            print("InstanceID token: \(refreshedToken)")
+        }
+        
+        // Connect to FCM since connection may have failed when attempted before having a token.
+        //connectToFcm()
     }
     
 }

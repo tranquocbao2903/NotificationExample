@@ -60,7 +60,6 @@ extension TaskViewController: UITableViewDataSource {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "'Due' MMM dd 'at' h:mm a"
         cell.detailTextLabel?.text = dateFormatter.string(from: taskItem.deadline as Date)
-        
         return cell
         
     }
@@ -77,14 +76,14 @@ extension TaskViewController : UITableViewDelegate {
         }
     }
     
-        func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-            
-            if editingStyle == .delete {
-                let taskItemSelected = taskItems[indexPath.row]
-                TaskList.sharedInstance.removeItem(taskItemSelected)
-                refreshList()
-            }
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        
+        if editingStyle == .delete {
+            let taskItemSelected = taskItems[indexPath.row]
+            TaskList.sharedInstance.removeItem(taskItemSelected)
+            refreshList()
         }
+    }
 }
 
 

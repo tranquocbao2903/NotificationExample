@@ -33,7 +33,6 @@ class TaskDetailViewController: UIViewController {
                 }
             }
         }
-        
     }
 
     override func didReceiveMemoryWarning() {
